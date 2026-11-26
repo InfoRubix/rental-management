@@ -1,0 +1,50 @@
+{
+  "name": "rental-management",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:lan": "vite --mode lan --host 0.0.0.0",
+    "dev:netlify": "netlify dev",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "seed:emulator": "tsx scripts/seed-emulator.ts",
+    "check:firebase": "tsx scripts/check-firebase.ts",
+    "user:make-admin": "tsx scripts/users.ts make-admin",
+    "user:make-staff": "tsx scripts/users.ts make-staff",
+    "user:block": "tsx scripts/users.ts block",
+    "user:unblock": "tsx scripts/users.ts unblock",
+    "user:list": "tsx scripts/users.ts list"
+  },
+  "dependencies": {
+    "firebase": "^13.4.0",
+    "firebase-admin": "^14.5.1",
+    "jsqr": "^1.4.0",
+    "qrcode": "^1.5.4",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-router": "^8.5.2",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/qrcode": "^1.5.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.1"
+  },
+  "overrides": {
+    "@grpc/grpc-js": "^1.14.7"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

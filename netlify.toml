@@ -1,0 +1,70 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+  functions = "netlify/functions"
+
+[build.environment]
+  # firebase-admin requires Node.js 22 or newer.
+  NODE_VERSION = "22"
+
+[functions]
+  node_bundler = "esbuild"
+  external_node_modules = ["firebase-admin"]
+
+# Local `netlify dev` (optional alternative to `npm run dev`).
+[dev]
+  # Starts Vite only (never "npm run dev" or "netlify dev", so there is no recursive startup).
+  # --mode netlify disables the in-process API so /api is served by the real function.
+  command = "npx vite --port 5174 --mode netlify"
+  targetPort = 5174
+  port = 8888
+  framework = "#custom"
+
+# Routing order:
+#  1. /api/*  -> the "api" Netlify Function. Its `config.path` (netlify/functions/api.ts) is matched BEFORE
+#     the redirect rules below, so the app fallback can never swallow API calls.
+#  2. Real files (sw.js, manifest.webmanifest, /assets/*, /icons/*) are served as-is: this rule is not
+#     forced, and Netlify only applies it when no file exists at that path.
+#  3. Everything else (deep links like /item/abc, /admin/requests/xyz, refreshes) loads the app.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# --- Caching for the installable app (PWA) ---
+# The service worker and manifest must always be re-checked, or installed apps would not see updates.
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Service-Worker-Allowed = "/"
+
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Cache-Control = "no-cache"
+    Content-Type = "application/manifest+json"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+# Built JS/CSS have a content hash in their names, so they can be cached for a year.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/icons/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Referrer-Policy = "no-referrer"
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Permissions-Policy = "camera=(self), microphone=(), geolocation=()"

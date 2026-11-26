@@ -1,0 +1,20 @@
+# Dependencies and build output
+node_modules/
+dist/
+.netlify/
+
+# Secrets — never commit these
+.env
+.env.*
+!.env.example
+*service-account*.json
+*serviceAccount*.json
+*-firebase-adminsdk-*.json
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+*.log
