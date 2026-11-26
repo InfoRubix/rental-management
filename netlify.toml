@@ -6,6 +6,9 @@
 [build.environment]
   # firebase-admin requires Node.js 22 or newer.
   NODE_VERSION = "22"
+  # ...also when the function RUNS (Netlify's default function runtime is older and cannot load
+  # firebase-admin's ESM dependency "jose": ERR_REQUIRE_ESM).
+  AWS_LAMBDA_JS_RUNTIME = "nodejs22.x"
 
 [functions]
   node_bundler = "esbuild"

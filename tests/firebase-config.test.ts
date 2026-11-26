@@ -45,3 +45,17 @@ describe('Firebase error messages', () => {
     expect(r.data.error.message).toMatch(/placeholder/);
   });
 });
+
+describe('telling a forged token from a wrong-project token', async () => {
+  const { issuedByOtherFirebaseProject } = await import('../server/backend');
+  const tok = (payload: object) => `x.${Buffer.from(JSON.stringify(payload)).toString('base64url')}.y`;
+  it('garbage or forged tokens are just invalid sign-ins', () => {
+    expect(issuedByOtherFirebaseProject('not-a-token', 'proj-a')).toBe(false);
+    expect(issuedByOtherFirebaseProject(tok({ sub: 'x' }), 'proj-a')).toBe(false);
+    expect(issuedByOtherFirebaseProject(tok({ aud: 'proj-b', iss: 'https://evil.example' }), 'proj-a')).toBe(false);
+  });
+  it('a Firebase token from another project is a configuration problem', () => {
+    expect(issuedByOtherFirebaseProject(tok({ aud: 'proj-b', iss: 'https://securetoken.google.com/proj-b' }), 'proj-a')).toBe(true);
+    expect(issuedByOtherFirebaseProject(tok({ aud: 'proj-a', iss: 'https://securetoken.google.com/proj-a' }), 'proj-a')).toBe(false);
+  });
+});

@@ -108,7 +108,7 @@ export async function getFirebaseAdminApp() {
 }
 
 async function createFirebaseBackend(config: ServerConfig): Promise<Backend> {
-  const { app, usingEmulator } = await getFirebaseAdminApp();
+  const { app, usingEmulator, projectId } = await getFirebaseAdminApp();
   const { getFirestore } = await import('firebase-admin/firestore');
   const { getAuth } = await import('firebase-admin/auth');
   const { FirestoreDb } = await import('./db/firestore');
@@ -131,7 +131,9 @@ async function createFirebaseBackend(config: ServerConfig): Promise<Backend> {
         };
       } catch (err) {
         const msg = String((err as Error)?.message ?? '');
-        if (/incorrect "aud"|incorrect "iss"/i.test(msg)) {
+        // Only a genuine Firebase token from ANOTHER project means misconfiguration; anything else
+        // (garbage, forged, missing audience) is simply an invalid sign-in.
+        if (/incorrect "aud"|incorrect "iss"/i.test(msg) && issuedByOtherFirebaseProject(token, projectId)) {
           throw new ConfigError(
             'Staff sign-in belongs to a different Firebase project than the server. VITE_FIREBASE_PROJECT_ID and FIREBASE_PROJECT_ID must be the same project.',
           );
@@ -142,6 +144,23 @@ async function createFirebaseBackend(config: ServerConfig): Promise<Backend> {
       }
     },
   };
+}
+
+/**
+ * True only when the (unverified) token clearly comes from a different Firebase project: a real
+ * Firebase ID token carries aud = that project's ID and iss = https://securetoken.google.com/<id>.
+ */
+export function issuedByOtherFirebaseProject(token: string, ourProjectId: string): boolean {
+  try {
+    const payload = JSON.parse(Buffer.from(token.split('.')[1] ?? '', 'base64url').toString('utf8')) as { aud?: unknown; iss?: unknown };
+    return (
+      typeof payload.aud === 'string' &&
+      payload.aud !== ourProjectId &&
+      payload.iss === `https://securetoken.google.com/${payload.aud}`
+    );
+  } catch {
+    return false;
+  }
 }
 
 function createMemoryBackend(config: ServerConfig): Backend {
